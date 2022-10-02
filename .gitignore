@@ -1,5 +1,6 @@
 # Project folder
 cache/
+package-lock.json
 
 # third-party library
 
