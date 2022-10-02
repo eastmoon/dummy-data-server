@@ -125,39 +125,40 @@ goto end
 :: ------------------- Command "start" mathod -------------------
 
 :cli-start-website-prepare (
-    echo ^> Build Website image
+    echo ^> Build image
     docker build --rm^
         -t dummy_service:%PROJECT_NAME%^
         ./docker
 
-    echo ^> Create Website tmp directory
-    IF NOT EXIST cache\website (
-        mkdir cache\website
+    echo ^> Create cache
+    IF NOT EXIST cache\node_modules (
+        mkdir cache\node_modules
     )
     IF NOT EXIST cache\log (
         mkdir cache\log
     )
 
-    echo ^> Upgrade Website library
+    echo ^> Upgrade node_modules cache
     docker run -ti --rm^
         -v %cd%\src\:/repo/^
-        -v %cd%\cache\website\:/repo/node_modules/^
-        dummy_service:%PROJECT_NAME% bash -l -c "yarn install"
+        -v %cd%\cache\node_modules\:/repo/node_modules/^
+        dummy_service:%PROJECT_NAME% bash -l -c "npm install"
 
     goto end
 )
 
 :cli-start (
-    echo ^> Build ebook Docker images with gitbook tools
     call :cli-start-website-prepare
 
-    echo ^> Startup docker container instance
-    @rem Run next deveopment with stdout
+    echo ^> Remove old container
+    docker rm -f dummy_service_%PROJECT_NAME%
 
+    echo ^> Startup container instance
+    @rem Run next deveopment with stdout
     IF defined DEVELOPER (
         docker run -ti --rm^
             -v %cd%\src\:/repo/^
-            -v %cd%\cache\website\:/repo/node_modules/^
+            -v %cd%\cache\node_modules\:/repo/node_modules/^
             -v %cd%\cache\log\:/repo/log/^
             -p 7777:7777^
             --name dummy_service_%PROJECT_NAME%^
@@ -165,11 +166,11 @@ goto end
     ) else (
         docker run -d --rm^
             -v %cd%\src\:/repo/^
-            -v %cd%\cache\website\:/repo/node_modules/^
+            -v %cd%\cache\node_modules\:/repo/node_modules/^
             -v %cd%\cache\log\:/repo/log/^
             -p 7777:7777^
             --name dummy_service_%PROJECT_NAME%^
-            dummy_service:%PROJECT_NAME% bash -l -c "yarn start > log/exec.log"
+            dummy_service:%PROJECT_NAME% bash -l -c "npm start"
     )
     goto end
 )
@@ -182,7 +183,7 @@ goto end
 )
 
 :cli-start-help (
-    echo Start service with docker compose.
+    echo Start service with docker.
     echo.
     echo Options:
     echo.
@@ -192,7 +193,7 @@ goto end
 :: ------------------- Command "down" mathod -------------------
 
 :cli-down (
-    @rem Close docker container instance by docker rm
+    @rem Close container instance
     docker rm -f dummy_service_%PROJECT_NAME%
 
     goto end
@@ -203,7 +204,7 @@ goto end
 )
 
 :cli-down-help (
-    echo Close docker container instance by docker-compose.
+    echo Close container instance.
     goto end
 )
 
